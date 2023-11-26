@@ -179,14 +179,15 @@ async function run() {
       const result = await bioDataCollection.find(qurey).toArray()
       res.send(result)
     })
-
-    // app.get('/biodata/:id', async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) }
-    //   const result = await bioDataCollection.findOne(query).toArray()
-    //   res.send(result)
-    //   console.log(result);
-    // })
+  //   app.get('/biodata/:biodataId', async (req, res) => {
+  //     const biodataId = req.params.biodataId;
+  //     console.log(biodataId);
+  //     const qurey = { biodataId: biodataId }
+  //     console.log(qurey);
+  //     const result = await bioDataCollection.findOne(qurey)
+  //     console.log(result);
+  //     res.send(result)
+  // })
 
     // get all data
     app.get('/biodata', async (req, res) => {
