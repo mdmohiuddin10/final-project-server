@@ -153,6 +153,23 @@ async function run() {
 
     })
 
+    // patch to make premium member
+    app.patch('/biodata/:id', verifyToken, async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      console.log(filter);
+      const updatedDoc = {
+        $set: {
+          status: 'premium'
+        }
+      }
+      const result = await bioDataCollection.updateOne(filter, updatedDoc)
+      console.log(result);
+      res.send(result)
+
+    })
+
     // 
     app.get('/biodata/:email', verifyToken, async (req, res) => {
       const qurey = { email: req.params.email }
