@@ -180,16 +180,7 @@ async function run() {
       const result = await bioDataCollection.find(qurey).toArray()
       res.send(result)
     })
-    //   app.get('/biodata/:biodataId', async (req, res) => {
-    //     const biodataId = req.params.biodataId;
-    //     console.log(biodataId);
-    //     const qurey = { biodataId: biodataId }
-    //     console.log(qurey);
-    //     const result = await bioDataCollection.findOne(qurey)
-    //     console.log(result);
-    //     res.send(result)
-    // })
-
+  
     // get all data
     app.get('/biodata', async (req, res) => {
       const result = await bioDataCollection.find().toArray()
@@ -197,9 +188,9 @@ async function run() {
     })
 
 
-    // test purpose
+    // get data for details page
 
-      app.get('/biodata/admin/:email', verifyToken, async (req, res) => {
+    app.get('/biodata/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       if (email !== req.decoded.email) {
         return res.status(403).send({ message: 'forbidden access' })
@@ -211,6 +202,20 @@ async function run() {
         admin = user.status === 'premium';
       }
       res.send({ admin })
+    })
+
+
+    // Favourite data collection
+    app.post('/favourite', async(req, res)=>{
+      const user = req.body;
+      const query = {biodataId: user.biodataId}
+      const existingUser = await FavouriteDataCollection.findOne(query)
+      if (existingUser) {
+        return res.send({ message: 'user already exists', insertedId: null })
+      }
+      const result = await FavouriteDataCollection.insertOne(user)
+      res.send(result)
+      console.log(result);
     })
 
 
