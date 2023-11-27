@@ -31,6 +31,7 @@ async function run() {
     // collections name
     const usersCollection = client.db('weddingDB').collection('users')
     const bioDataCollection = client.db('weddingDB').collection('biodata')
+    const FavouriteDataCollection = client.db('weddingDB').collection('favourite')
 
     // jwt token
     app.post('/jwt', async (req, res) => {
@@ -179,20 +180,37 @@ async function run() {
       const result = await bioDataCollection.find(qurey).toArray()
       res.send(result)
     })
-  //   app.get('/biodata/:biodataId', async (req, res) => {
-  //     const biodataId = req.params.biodataId;
-  //     console.log(biodataId);
-  //     const qurey = { biodataId: biodataId }
-  //     console.log(qurey);
-  //     const result = await bioDataCollection.findOne(qurey)
-  //     console.log(result);
-  //     res.send(result)
-  // })
+    //   app.get('/biodata/:biodataId', async (req, res) => {
+    //     const biodataId = req.params.biodataId;
+    //     console.log(biodataId);
+    //     const qurey = { biodataId: biodataId }
+    //     console.log(qurey);
+    //     const result = await bioDataCollection.findOne(qurey)
+    //     console.log(result);
+    //     res.send(result)
+    // })
 
     // get all data
     app.get('/biodata', async (req, res) => {
       const result = await bioDataCollection.find().toArray()
       res.send(result)
+    })
+
+
+    // test purpose
+
+      app.get('/biodata/admin/:email', verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
+      const query = { email: email };
+      const user = await bioDataCollection.findOne(query)
+      let admin = false;
+      if (user) {
+        admin = user.status === 'premium';
+      }
+      res.send({ admin })
     })
 
 
