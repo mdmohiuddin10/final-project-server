@@ -252,6 +252,12 @@ async function run() {
       console.log(result);
     })
 
+    // 
+    app.get('/requset', async(req, res)=>{
+      const result = await requestDataCollection.find().toArray()
+      res.send(result)
+    })
+
 
 
 
