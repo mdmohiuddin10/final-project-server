@@ -3,6 +3,7 @@ const app = express()
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
 
@@ -32,6 +33,7 @@ async function run() {
     const usersCollection = client.db('weddingDB').collection('users')
     const bioDataCollection = client.db('weddingDB').collection('biodata')
     const FavouriteDataCollection = client.db('weddingDB').collection('favourite')
+    const requestDataCollection = client.db('weddingDB').collection('request')
 
     // jwt token
     app.post('/jwt', async (req, res) => {
@@ -172,15 +174,20 @@ async function run() {
     })
 
     // 
-    app.get('/biodata/:email', verifyToken, async (req, res) => {
-      const qurey = { email: req.params.email }
-      // if (req.params.email !== req.decoded.email) {
-      //     return res.status(403).send({ message: 'forbidden access' })
-      // }
-      const result = await bioDataCollection.find(qurey).toArray()
+    // app.get('/biodata/:email', verifyToken, async (req, res) => {
+    //   const qurey = { email: req.params.email }
+    //   console.log(qurey);
+    //   const result = await bioDataCollection.findOne(qurey)
+    //   res.send(result)
+    // })
+
+    app.get('/biodata/:id', async (req, res) => {
+      const id = req.params.id;
+      const qurey = { _id: new ObjectId(id) }
+      const result = await bioDataCollection.findOne(qurey)
       res.send(result)
     })
-  
+
     // get all data
     app.get('/biodata', async (req, res) => {
       const result = await bioDataCollection.find().toArray()
@@ -189,7 +196,6 @@ async function run() {
 
 
     // get data for details page
-
     app.get('/biodata/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       if (email !== req.decoded.email) {
@@ -206,9 +212,9 @@ async function run() {
 
 
     // Favourite data collection
-    app.post('/favourite', async(req, res)=>{
+    app.post('/favourite', async (req, res) => {
       const user = req.body;
-      const query = {biodataId: user.biodataId}
+      const query = { biodataId: user.biodataId }
       const existingUser = await FavouriteDataCollection.findOne(query)
       if (existingUser) {
         return res.send({ message: 'user already exists', insertedId: null })
@@ -218,6 +224,54 @@ async function run() {
       console.log(result);
     })
 
+    // get operation
+    app.get('/favourite', async (req, res) => {
+      const result = await FavouriteDataCollection.find().toArray()
+      res.send(result)
+    })
+
+
+    // delete
+    app.delete('/favourite/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await FavouriteDataCollection.deleteOne(query);
+      res.send(result)
+    })
+
+    // request collection
+    app.post('/requset', async (req, res) => {
+      const user = req.body;
+      const query = { biodataId: user.biodataId }
+      const existingUser = await requestDataCollection.findOne(query)
+      if (existingUser) {
+        return res.send({ message: 'user already exists', insertedId: null })
+      }
+      const result = await requestDataCollection.insertOne(user)
+      res.send(result)
+      console.log(result);
+    })
+
+
+
+
+    // payment-intent
+    app.post('/create-payment-intent', async (req, res) => {
+      const { price } = req.body;
+      const amount = (price * 100)
+      console.log(amount);
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ['card'],
+      })
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+
+    })
 
 
 
