@@ -26,7 +26,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     // collections name
     const usersCollection = client.db('weddingDB').collection('users')
@@ -137,25 +137,24 @@ async function run() {
       res.send(result)
     })
 
-    // patch 
-    app.patch('/biodata/admin/:id', verifyToken, async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      console.log(filter);
-      const updatedDoc = {
+    // patch [manage user]
+    app.patch('/biodata/admin/:email', verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+       const updatedDoc = {
         $set: {
-          status: 'pending'
+          status: 'premium'
         }
       }
       const result = await bioDataCollection.updateOne(filter, updatedDoc)
+      console.log(result);
       res.send(result)
 
     })
 
-    // patch to make premium member
-    app.patch('/biodata/:email', verifyToken, async (req, res) => {
+    // patch to make premium member[approve premium]
+    app.patch('/biodata/:email', async (req, res) => {
       const email = req.params.email;
-      console.log(email);
       const filter = { email: email };
       console.log(filter);
       const updatedDoc = {
@@ -169,10 +168,10 @@ async function run() {
 
     })
 
-    
+
+
     app.get('/biodata/:email', verifyToken, async (req, res) => {
       const qurey = { email: req.params.email }
-      console.log(qurey);
       const result = await bioDataCollection.findOne(qurey)
       res.send(result)
     })
@@ -217,7 +216,6 @@ async function run() {
       }
       const result = await FavouriteDataCollection.insertOne(user)
       res.send(result)
-      console.log(result);
     })
 
     // get operation
@@ -238,14 +236,13 @@ async function run() {
     // request collection
     app.post('/requset', async (req, res) => {
       const user = req.body;
-      const query = { biodataId: user.requestedBiodataId }
+      const query = { requestedBiodataId: user.requestedBiodataId }
       const existingUser = await requestDataCollection.findOne(query)
       if (existingUser) {
         return res.send({ message: 'user already exists', insertedId: null })
       }
       const result = await requestDataCollection.insertOne(user)
       res.send(result)
-      console.log(result);
     })
 
     // 
@@ -257,7 +254,6 @@ async function run() {
     // petch opreation
     app.patch('/requset/admin/:id', async (req, res) => {
       const id = req.params.id;
-      console.log(id);
       const filter = { _id: new ObjectId(id) };
       console.log(filter);
       const updatedDoc = {
@@ -266,7 +262,6 @@ async function run() {
         }
       }
       const result = await requestDataCollection.updateOne(filter, updatedDoc)
-      console.log(result);
       res.send(result)
 
     })
@@ -298,8 +293,6 @@ async function run() {
     app.post('/create-payment-intent', async (req, res) => {
       const { price } = req.body;
       const amount = (price * 100)
-      console.log(amount);
-
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
@@ -327,9 +320,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-  res.send('server is running...');
+  res.send('server is running speedly...');
 })
 
 app.listen(port, () => {
-  console.log(`final project is running ${port}`);
+  console.log(`final project is running speedly ${port}`);
 })
