@@ -1,6 +1,7 @@
 const express = require('express')
 const app = express()
 const cors = require('cors');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
@@ -11,8 +12,6 @@ const port = process.env.PORT || 5000;
 app.use(cors())
 app.use(express.json())
 
-
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3gsgkud.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -34,6 +33,7 @@ async function run() {
     const bioDataCollection = client.db('weddingDB').collection('biodata')
     const FavouriteDataCollection = client.db('weddingDB').collection('favourite')
     const requestDataCollection = client.db('weddingDB').collection('request')
+    const reviewDataCollection = client.db('weddingDB').collection('review')
 
     // jwt token
     app.post('/jwt', async (req, res) => {
@@ -112,14 +112,12 @@ async function run() {
     app.patch('/users/admin/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      console.log(filter);
       const updatedDoc = {
         $set: {
           role: 'admin'
         }
       }
       const result = await usersCollection.updateOne(filter, updatedDoc)
-      console.log(result);
       res.send(result)
 
     })
@@ -142,7 +140,6 @@ async function run() {
     // patch 
     app.patch('/biodata/admin/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
-      console.log(id);
       const filter = { _id: new ObjectId(id) };
       console.log(filter);
       const updatedDoc = {
@@ -151,16 +148,15 @@ async function run() {
         }
       }
       const result = await bioDataCollection.updateOne(filter, updatedDoc)
-      console.log(result);
       res.send(result)
 
     })
 
     // patch to make premium member
-    app.patch('/biodata/:id', verifyToken, async (req, res) => {
-      const id = req.params.id;
-      console.log(id);
-      const filter = { _id: new ObjectId(id) };
+    app.patch('/biodata/:email', verifyToken, async (req, res) => {
+      const email = req.params.email;
+      console.log(email);
+      const filter = { email: email };
       console.log(filter);
       const updatedDoc = {
         $set: {
@@ -168,18 +164,18 @@ async function run() {
         }
       }
       const result = await bioDataCollection.updateOne(filter, updatedDoc)
-      console.log(result);
+      console.log('for premium', result);
       res.send(result)
 
     })
 
-    // 
-    // app.get('/biodata/:email', verifyToken, async (req, res) => {
-    //   const qurey = { email: req.params.email }
-    //   console.log(qurey);
-    //   const result = await bioDataCollection.findOne(qurey)
-    //   res.send(result)
-    // })
+    
+    app.get('/biodata/:email', verifyToken, async (req, res) => {
+      const qurey = { email: req.params.email }
+      console.log(qurey);
+      const result = await bioDataCollection.findOne(qurey)
+      res.send(result)
+    })
 
     app.get('/biodata/:id', async (req, res) => {
       const id = req.params.id;
@@ -214,7 +210,7 @@ async function run() {
     // Favourite data collection
     app.post('/favourite', async (req, res) => {
       const user = req.body;
-      const query = { biodataId: user.biodataId }
+      const query = { favbiodataId: user.favbiodataId }
       const existingUser = await FavouriteDataCollection.findOne(query)
       if (existingUser) {
         return res.send({ message: 'user already exists', insertedId: null })
@@ -242,7 +238,7 @@ async function run() {
     // request collection
     app.post('/requset', async (req, res) => {
       const user = req.body;
-      const query = { biodataId: user.biodataId }
+      const query = { biodataId: user.requestedBiodataId }
       const existingUser = await requestDataCollection.findOne(query)
       if (existingUser) {
         return res.send({ message: 'user already exists', insertedId: null })
@@ -253,8 +249,45 @@ async function run() {
     })
 
     // 
-    app.get('/requset', async(req, res)=>{
+    app.get('/requset', async (req, res) => {
       const result = await requestDataCollection.find().toArray()
+      res.send(result)
+    })
+
+    // petch opreation
+    app.patch('/requset/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      console.log(filter);
+      const updatedDoc = {
+        $set: {
+          status: 'approved'
+        }
+      }
+      const result = await requestDataCollection.updateOne(filter, updatedDoc)
+      console.log(result);
+      res.send(result)
+
+    })
+
+    // delete
+    app.delete('/requset/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await requestDataCollection.deleteOne(query);
+      res.send(result)
+    })
+
+    // review
+    app.post('/review', async (req, res) => {
+      const item = req.body;
+      const result = await reviewDataCollection.insertOne(item)
+      res.send(result)
+    })
+
+    app.get('/review', async (req, res) => {
+      const result = await reviewDataCollection.find().toArray()
       res.send(result)
     })
 
